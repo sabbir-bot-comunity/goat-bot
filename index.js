@@ -1,35 +1,44 @@
 const login = require("./sabbir-fca");
 const fs = require("fs");
+const logger = require("./utils/log");
 
-module.exports = function() {
-    if (!fs.existsSync("./account.txt")) {
-        console.error("❗ account.txt ফাইলটি পাওয়া যায়নি!");
-        return;
-    }
+const langFile = JSON.parse(fs.readFileSync("./languages/bn.json", "utf8"));
 
-    const appState = JSON.parse(fs.readFileSync("./account.txt", "utf8"));
+// নামসহ মেসেজ পাঠানোর ফাংশন
+const getText = (path, ...args) => {
+  const botName = "SABBIR CHAT BOT"; // আপনার নাম
+  let text = path.split(".").reduce((obj, key) => obj?.[key], langFile) || path;
+  args.forEach((arg, i) => text = text.replace(`%${i + 1}`, arg));
+  
+  // যদি এটা লগিন বা সিস্টেম মেসেজ না হয়, তবে নামের ট্যাগ যোগ করবে
+  if (path.startsWith("commands")) {
+      return `[ ${botName} ] : ${text}`;
+  }
+  return text;
+};
 
-    login({ appState }, (err, api) => {
-        if (err) return console.error("❌ লগইন এরর:", err);
+module.exports = () => {
+  if (!fs.existsSync("./account.txt")) return logger(getText("login.noAppState"), "ERROR");
 
-        api.setOptions({ listenEvents: true, selfListen: false });
-        console.log("✅ Sabbir-FCA সক্রিয় হয়েছে! বট এখন অনলাইনে।");
+  const appState = JSON.parse(fs.readFileSync("./account.txt", "utf8"));
+  
+  login({ appState }, (err, api) => {
+    if (err) return logger(getText("login.error", err), "ERROR");
 
-        api.listenMqtt((err, event) => {
-            if (err) return;
+    api.setOptions({ listenEvents: true, selfListen: false, online: true });
+    logger(getText("login.success"), "LOGIN");
 
-            // সিম্পল টেস্ট কমান্ড
-            if (event.type === "message" && event.body) {
-                const message = event.body.toLowerCase();
-                
-                if (message === "prefix") {
-                    api.sendMessage("আমার কোনো প্রিক্স নেই, সরাসরি কমান্ড লিখুন।", event.threadID);
-                }
-                
-                if (message === "hi") {
-                    api.sendMessage("হ্যালো সাব্বির ভাই! আপনার বট সফলভাবে চলছে। ❤️", event.threadID);
-                }
-            }
-        });
+    api.listenMqtt((err, event) => {
+      if (err || !event.body) return;
+
+      const message = event.body.toLowerCase();
+
+      if (message === "hi") {
+        api.sendMessage(getText("commands.hi"), event.threadID);
+      } 
+      else if (message === "prefix") {
+        api.sendMessage(getText("commands.prefix"), event.threadID);
+      }
     });
+  });
 };
