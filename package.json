@@ -1,0 +1,14 @@
+{
+  "name": "sabbir-chat-bot",
+  "version": "1.0.0",
+  "description": "Facebook Chat Bot by Sabbir",
+  "main": "Sabbir.js",
+  "scripts": {
+    "start": "node Sabbir.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "fs-extra": "^11.1.0",
+    "path": "^0.12.7"
+  }
+}
