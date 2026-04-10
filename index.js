@@ -42,3 +42,13 @@ module.exports = () => {
     });
   });
 };
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('SABBIR CHAT BOT IS RUNNING...');
+});
+
+app.listen(3000, () => {
+  logger("Uptime Server রেডি!", "INFO");
+});
